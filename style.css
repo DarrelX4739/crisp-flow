@@ -1,0 +1,182 @@
+:root {
+    --bg-dark: #0a0a0a;
+    --bg-card: #141414;
+    --bg-input: #1f1f1f;
+    --primary-red: #dc2626;
+    --accent-red: #ef4444;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --border: #2e2e2e;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Utilities */
+.hidden { display: none !important; }
+
+/* Auth Styling Container Layout */
+.auth-card {
+    background: var(--bg-card);
+    padding: 2.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--primary-red);
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15);
+}
+
+.auth-card h2 {
+    margin-bottom: 1.5rem;
+    color: var(--primary-red);
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* Global Forms & Input Custom Fields */
+input, select {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    border-radius: 4px;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-red);
+}
+
+/* Application Component Buttons */
+button {
+    background: var(--primary-red);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover { background: var(--accent-red); }
+.btn-secondary { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); }
+.btn-secondary:hover { background: #2a2a2a; color: white; }
+.btn-small { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+
+/* Frame Dashboard Window Box App Layout */
+#app-container {
+    width: 100%;
+    max-width: 1000px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: #000;
+    border-bottom: 1px solid var(--border);
+}
+
+header h1 { color: var(--primary-red); font-size: 1.5rem; letter-spacing: 0.5px; }
+
+/* Navigation Tab Bars */
+.tabs { display: flex; background: #111; border-bottom: 1px solid var(--border); }
+.tab-btn {
+    flex: 1;
+    background: none;
+    border-radius: 0;
+    padding: 1rem;
+    color: var(--text-muted);
+    border-bottom: 3px solid transparent;
+}
+.tab-btn.active {
+    color: var(--primary-red);
+    border-bottom-color: var(--primary-red);
+    background: var(--bg-card);
+}
+
+main { flex: 1; padding: 2rem; overflow-y: auto; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+/* Dynamic Layout Planner Task Grids */
+.task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+.task-card {
+    background: #1a1a1a;
+    border-left: 5px solid var(--border);
+    padding: 1.25rem;
+    border-radius: 4px;
+    position: relative;
+}
+.task-card.high { border-left-color: var(--primary-red); }
+.task-card.medium { border-left-color: #f97316; }
+.task-card.low { border-left-color: #3b82f6; }
+
+/* Chat Structural Alignment Frameworks */
+.chat-box {
+    height: 400px;
+    background: #0f0f0f;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.msg-wrapper { display: flex; flex-direction: column; max-width: 70%; position: relative; }
+.msg-wrapper.incoming { align-self: flex-start; } /* Incoming alignments Left */
+.msg-wrapper.outgoing { align-self: flex-end; align-items: flex-end; } /* Outgoing user alignments Right */
+
+.msg-meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+.msg-bubble {
+    background: #1f1f1f;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: var(--text-main);
+    cursor: pointer;
+    position: relative;
+}
+.msg-wrapper.outgoing .msg-bubble { background: var(--primary-red); }
+
+/* Hover Message Controls & Pop Action Lists */
+.msg-reply-ref { font-size: 0.75rem; opacity: 0.7; background: rgba(0,0,0,0.2); padding: 0.25rem; border-radius: 4px; margin-bottom: 0.25rem; }
+.msg-actions { display: none; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.75rem; }
+.msg-bubble:hover + .msg-actions, .msg-actions:hover { display: flex; }
+.action-lnk { color: var(--text-muted); cursor: pointer; text-decoration: underline; }
+.action-lnk:hover { color: white; }
+
+.react-bar { display: flex; gap: 0.25rem; margin-top: 0.2rem; background: #2a2a2a; padding: 0.1rem 0.4rem; border-radius: 10px; font-size: 0.8rem; width: fit-content; }
+
+.reply-preview { display: flex; justify-content: space-between; background: #261010; padding: 0.5rem; border-left: 3px solid var(--primary-red); font-size: 0.85rem; }
+
+.chat-form { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
+/* Modals Window Box System */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 100; }
+.modal-content { background: var(--bg-card); padding: 2rem; border-radius: 8px; width: 100%; max-width: 450px; border: 1px solid var(--border); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
