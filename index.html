@@ -13,8 +13,8 @@
         <input type="email" id="auth-email" placeholder="Email Address" required>
         <input type="password" id="auth-password" placeholder="Password" required>
         <div class="auth-buttons">
-            <button id="btn-login">Log In</button>
-            <button id="btn-signup" class="btn-secondary">Sign Up</button>
+            <button id="btn-login" type="button">Log In</button>
+            <button id="btn-signup" type="button" class="btn-secondary">Sign Up</button>
         </div>
     </div>
 
@@ -23,33 +23,31 @@
             <h1>Crisp Flow</h1>
             <div class="user-profile">
                 <span id="user-display"></span>
-                <button id="btn-logout" class="btn-small">Logout</button>
+                <button id="btn-logout" class="btn-small" type="button">Logout</button>
             </div>
         </header>
 
         <nav class="tabs">
-            <button class="tab-btn active" data-tab="planner-tab">Activity Planner</button>
-            <button class="tab-btn" data-tab="chat-tab">Team Chat</button>
+            <button class="tab-btn active" type="button" data-tab="planner-tab">Activity Planner</button>
+            <button class="tab-btn" type="button" data-tab="chat-tab">Team Chat</button>
         </nav>
 
         <main>
             <section id="planner-tab" class="tab-content">
                 <div class="section-header">
                     <h2>Your Tasks</h2>
-                    <button id="btn-open-task-modal">+ Add New Task</button>
+                    <button id="btn-open-task-modal" type="button">+ Add New Task</button>
                 </div>
-                <div id="task-list" class="task-grid">
-                    </div>
+                <div id="task-list" class="task-grid"></div>
             </section>
 
             <section id="chat-tab" class="tab-content hidden">
                 <h2>Team Room</h2>
-                <div id="chat-box" class="chat-box">
-                    </div>
+                <div id="chat-box" class="chat-box"></div>
                 
                 <div id="reply-preview" class="reply-preview hidden">
                     <span>Replying to: <em id="reply-target-text"></em></span>
-                    <button id="btn-cancel-reply">×</button>
+                    <button id="btn-cancel-reply" type="button">×</button>
                 </div>
 
                 <form id="chat-form" class="chat-form">
