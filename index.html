@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crisp Flow</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="auth-container" class="auth-card">
+        <h2>Crisp Flow</h2>
+        <input type="email" id="auth-email" placeholder="Email Address" required>
+        <input type="password" id="auth-password" placeholder="Password" required>
+        <div class="auth-buttons">
+            <button id="btn-login">Log In</button>
+            <button id="btn-signup" class="btn-secondary">Sign Up</button>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <header>
+            <h1>Crisp Flow</h1>
+            <div class="user-profile">
+                <span id="user-display"></span>
+                <button id="btn-logout" class="btn-small">Logout</button>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="planner-tab">Activity Planner</button>
+            <button class="tab-btn" data-tab="chat-tab">Team Chat</button>
+        </nav>
+
+        <main>
+            <section id="planner-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Your Tasks</h2>
+                    <button id="btn-open-task-modal">+ Add New Task</button>
+                </div>
+                <div id="task-list" class="task-grid">
+                    </div>
+            </section>
+
+            <section id="chat-tab" class="tab-content hidden">
+                <h2>Team Room</h2>
+                <div id="chat-box" class="chat-box">
+                    </div>
+                
+                <div id="reply-preview" class="reply-preview hidden">
+                    <span>Replying to: <em id="reply-target-text"></em></span>
+                    <button id="btn-cancel-reply">×</button>
+                </div>
+
+                <form id="chat-form" class="chat-form">
+                    <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" required>
+                    <button type="submit">Send</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <div id="task-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Create New Task</h3>
+            <form id="task-form">
+                <label for="task-name">Task Name</label>
+                <input type="text" id="task-name" required>
+
+                <label for="task-priority">Priority Level</label>
+                <select id="task-priority" required>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+
+                <label for="task-date">Due Date</label>
+                <input type="date" id="task-date" required>
+
+                <div class="modal-actions">
+                    <button type="button" id="btn-close-modal" class="btn-secondary">Cancel</button>
+                    <button type="submit">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
