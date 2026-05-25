@@ -1,4 +1,4 @@
-// Using verified, structured version-locked packages to prevent network bundle drops
+// Using verified version-locked CDN packages
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -16,16 +16,17 @@ const firebaseConfig = {
 };
 
 // Initialize App References
+console.log("Initializing Firebase Setup...");
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Runtime Cache
+// Runtime Cache Tracking States
 let currentUser = null;
 let currentReplyTargetId = null;
 let messageLookupCache = {}; 
 
-// Elements Match Registry
+// Document Element DOM Registry
 const authContainer = document.getElementById('auth-container');
 const appContainer = document.getElementById('app-container');
 const emailInput = document.getElementById('auth-email');
@@ -35,42 +36,67 @@ const btnSignup = document.getElementById('btn-signup');
 const btnLogout = document.getElementById('btn-logout');
 const userDisplay = document.getElementById('user-display');
 const chatBox = document.getElementById('chat-box');
+const taskModal = document.getElementById('task-modal');
+const taskForm = document.getElementById('task-form');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+const replyPreview = document.getElementById('reply-preview');
+const replyTargetText = document.getElementById('reply-target-text');
 
-// --- AUTH HANDLERS ---
-btnSignup.addEventListener('click', async () => {
-    if(!emailInput.value || !passwordInput.value) return alert("Please fill in auth details.");
-    try {
-        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-        alert("Account verified with Crisp Flow!");
-    } catch (err) { alert(err.message); }
-});
+// =============================================================
+// 1. IMMEDIATE BUTTON EVENT LISTENERS (FOOLPROOF BINDING)
+// =============================================================
 
-btnLogin.addEventListener('click', async () => {
-    if(!emailInput.value || !passwordInput.value) return alert("Please fill in auth details.");
-    try {
-        await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    } catch (err) { alert(err.message); }
-});
+// Auth UI Buttons
+if (btnSignup) {
+    btnSignup.addEventListener('click', async () => {
+        console.log("Sign Up button clicked");
+        if(!emailInput.value || !passwordInput.value) return alert("Please fill in auth details.");
+        try {
+            await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+            alert("Account registered inside Crisp Flow!");
+        } catch (err) { alert(err.message); }
+    });
+}
 
-btnLogout.addEventListener('click', () => signOut(auth));
+if (btnLogin) {
+    btnLogin.addEventListener('click', async () => {
+        console.log("Log In button clicked");
+        if(!emailInput.value || !passwordInput.value) return alert("Please fill in auth details.");
+        try {
+            await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        } catch (err) { alert(err.message); }
+    });
+}
 
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        currentUser = user;
-        userDisplay.textContent = user.email;
-        authContainer.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        initRealtimeSyncs();
-    } else {
-        currentUser = null;
-        authContainer.classList.remove('hidden');
-        appContainer.classList.add('hidden');
-    }
-});
+if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+        console.log("Logout button clicked");
+        signOut(auth);
+    });
+}
 
-// --- NAVIGATION SWITCHING TABS ---
+// Modal Toggle Window Buttons
+const btnOpenModal = document.getElementById('btn-open-task-modal');
+if (btnOpenModal) {
+    btnOpenModal.addEventListener('click', () => {
+        console.log("Open Task Modal button clicked");
+        taskModal.classList.remove('hidden');
+    });
+}
+
+const btnCloseModal = document.getElementById('btn-close-modal');
+if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', () => {
+        console.log("Close Task Modal button clicked");
+        taskModal.classList.add('hidden');
+    });
+}
+
+// Navigation View Switcher Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
+        console.log("Tab clicked:", e.target.dataset.tab);
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
         e.target.classList.add('active');
@@ -78,16 +104,84 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-// --- MODAL CONTROLS ---
-const taskModal = document.getElementById('task-modal');
-document.getElementById('btn-open-task-modal').addEventListener('click', () => taskModal.classList.remove('hidden'));
-document.getElementById('btn-close-modal').addEventListener('click', () => taskModal.classList.add('hidden'));
+// Reply State Dismiss Button
+const btnCancelReply = document.getElementById('btn-cancel-reply');
+if (btnCancelReply) {
+    btnCancelReply.addEventListener('click', () => {
+        console.log("Cancel reply button clicked");
+        clearReplyState();
+    });
+}
 
-// --- REAL-TIME ENGINE SYNC ---
+// =============================================================
+// 2. DATA SUBMISSION WRITE HANDLERS
+// =============================================================
+
+if (taskForm) {
+    taskForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log("Task Form submitted");
+        const taskData = {
+            name: document.getElementById('task-name').value,
+            priority: document.getElementById('task-priority').value,
+            dueDate: document.getElementById('task-date').value,
+            userId: currentUser.uid
+        };
+        try {
+            await addDoc(collection(db, "tasks"), taskData);
+            taskModal.classList.add('hidden');
+            taskForm.reset();
+        } catch(err) { alert(err.message); }
+    });
+}
+
+if (chatForm) {
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log("Chat Form submitted");
+        if (!chatInput.value.trim()) return;
+
+        const msgPayload = {
+            text: chatInput.value,
+            senderEmail: currentUser.email,
+            senderUid: currentUser.uid,
+            timestamp: serverTimestamp(),
+            reactions: {},
+            replyTo: currentReplyTargetId
+        };
+
+        try {
+            await addDoc(collection(db, "messages"), msgPayload);
+            chatInput.value = "";
+            clearReplyState();
+        } catch (err) { alert(err.message); }
+    });
+}
+
+// =============================================================
+// 3. CORE REAL-TIME RENDERING PIPELINES
+// =============================================================
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        console.log("User session authenticated:", user.email);
+        currentUser = user;
+        userDisplay.textContent = user.email;
+        authContainer.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        initRealtimeSyncs();
+    } else {
+        console.log("No authenticated session found.");
+        currentUser = null;
+        authContainer.classList.remove('hidden');
+        appContainer.classList.add('hidden');
+    }
+});
+
 function initRealtimeSyncs() {
     const priorityWeight = { high: 1, medium: 2, low: 3 };
 
-    // Dynamic Task Sync
+    // Synced Activity Planner Tasks Listener
     onSnapshot(collection(db, "tasks"), (snapshot) => {
         let taskArray = [];
         snapshot.forEach(doc => {
@@ -102,34 +196,18 @@ function initRealtimeSyncs() {
         renderTasks(taskArray);
     });
 
-    // Dynamic Chat Sync
+    // Synced Real-time Team Chat Messages Listener
     const chatQuery = query(collection(db, "messages"), orderBy("timestamp", "asc"));
     onSnapshot(chatQuery, (snapshot) => {
-        // Clear old cache references
         messageLookupCache = {};
         snapshot.forEach(doc => messageLookupCache[doc.id] = doc.data());
         renderChat(snapshot);
     });
 }
 
-// --- TASK CREATION WRITE ---
-document.getElementById('task-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const taskData = {
-        name: document.getElementById('task-name').value,
-        priority: document.getElementById('task-priority').value,
-        dueDate: document.getElementById('task-date').value,
-        userId: currentUser.uid
-    };
-    try {
-        await addDoc(collection(db, "tasks"), taskData);
-        taskModal.classList.add('hidden');
-        document.getElementById('task-form').reset();
-    } catch(err) { alert(err.message); }
-});
-
 function renderTasks(tasks) {
     const container = document.getElementById('task-list');
+    if (!container) return;
     container.innerHTML = "";
     tasks.forEach(task => {
         const card = document.createElement('div');
@@ -143,33 +221,8 @@ function renderTasks(tasks) {
     });
 }
 
-// --- TEAM CHAT CONTROLLER LAYER ---
-const chatForm = document.getElementById('chat-form');
-const chatInput = document.getElementById('chat-input');
-const replyPreview = document.getElementById('reply-preview');
-const replyTargetText = document.getElementById('reply-target-text');
-
-chatForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!chatInput.value.trim()) return;
-
-    const msgPayload = {
-        text: chatInput.value,
-        senderEmail: currentUser.email,
-        senderUid: currentUser.uid,
-        timestamp: serverTimestamp(),
-        reactions: {},
-        replyTo: currentReplyTargetId
-    };
-
-    try {
-        await addDoc(collection(db, "messages"), msgPayload);
-        chatInput.value = "";
-        clearReplyState();
-    } catch (err) { alert(err.message); }
-});
-
 function renderChat(snapshot) {
+    if (!chatBox) return;
     chatBox.innerHTML = "";
 
     snapshot.forEach(docSnap => {
@@ -210,49 +263,54 @@ function renderChat(snapshot) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// --- EVENT DELEGATION FOR MOUNTED CHAT ACTIONS ---
-// This parent structural architecture ensures buttons work even after elements are dynamically updated
-chatBox.addEventListener('click', async (e) => {
-    const target = e.target;
-    if (!target.classList.contains('action-lnk')) return;
+// =============================================================
+// 4. CHAT AREA EVENT DELEGATION
+// =============================================================
+if (chatBox) {
+    chatBox.addEventListener('click', async (e) => {
+        const target = e.target;
+        if (!target.classList.contains('action-lnk')) return;
 
-    const id = target.dataset.id;
-    const emojis = ["😀", "😡", "😢", "👍", "👎", "🔥", "😂", "💀", "❤️"];
+        const id = target.dataset.id;
+        const emojis = ["😀", "😡", "😢", "👍", "👎", "🔥", "😂", "💀", "❤️"];
 
-    // 1. Reaction Logic Handler
-    if (target.classList.contains('btn-react')) {
-        const chosenEmoji = prompt(`Choose an emoji reaction to toggle:\n\n${emojis.join(' ')}`);
-        if (emojis.includes(chosenEmoji)) {
-            const docRef = doc(db, "messages", id);
-            const currentData = messageLookupCache[id];
-            const updatedReactions = { ...(currentData.reactions || {}) };
-            
-            if (updatedReactions[currentUser.uid] === chosenEmoji) {
-                delete updatedReactions[currentUser.uid];
-            } else {
-                updatedReactions[currentUser.uid] = chosenEmoji;
+        // Reaction Control Panel
+        if (target.classList.contains('btn-react')) {
+            console.log("React action item clicked for message:", id);
+            const chosenEmoji = prompt(`Choose an emoji reaction to toggle:\n\n${emojis.join(' ')}`);
+            if (emojis.includes(chosenEmoji)) {
+                const docRef = doc(db, "messages", id);
+                const currentData = messageLookupCache[id];
+                const updatedReactions = { ...(currentData.reactions || {}) };
+                
+                if (updatedReactions[currentUser.uid] === chosenEmoji) {
+                    delete updatedReactions[currentUser.uid];
+                } else {
+                    updatedReactions[currentUser.uid] = chosenEmoji;
+                }
+                await updateDoc(docRef, { reactions: updatedReactions });
             }
-            await updateDoc(docRef, { reactions: updatedReactions });
         }
-    }
 
-    // 2. Thread Reply Initiator
-    if (target.classList.contains('btn-reply')) {
-        currentReplyTargetId = id;
-        replyTargetText.textContent = `"${target.dataset.text.substring(0, 20)}..."`;
-        replyPreview.classList.remove('hidden');
-        chatInput.focus();
-    }
-
-    // 3. Message Purge Drop Logic
-    if (target.classList.contains('btn-delete')) {
-        if (confirm("Are you sure you want to delete this message?")) {
-            await deleteDoc(doc(db, "messages", id));
+        // Thread Reply Setup
+        if (target.classList.contains('btn-reply')) {
+            console.log("Reply action item clicked for message:", id);
+            currentReplyTargetId = id;
+            replyTargetText.textContent = `"${target.dataset.text.substring(0, 20)}..."`;
+            replyPreview.classList.remove('hidden');
+            chatInput.focus();
         }
-    }
-});
 
-document.getElementById('btn-cancel-reply').addEventListener('click', clearReplyState);
+        // Message Purge Deletion Handler
+        if (target.classList.contains('btn-delete')) {
+            console.log("Delete action item clicked for message:", id);
+            if (confirm("Are you sure you want to delete this message?")) {
+                await deleteDoc(doc(db, "messages", id));
+            }
+        }
+    });
+}
+
 function clearReplyState() {
     currentReplyTargetId = null;
     replyPreview.classList.add('hidden');
